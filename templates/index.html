@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101b35">
+  <title>Retail Finance | Analytics Workspace</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --navy:#101b35; --navy-2:#172746; --blue:#3867e8; --blue-soft:#edf2ff;
+      --ink:#17233b; --muted:#75819a; --line:#e8edf5; --surface:#fff;
+      --bg:#f4f6fb; --green:#159b72; --amber:#e59b28; --red:#dc5b62;
+      --shadow:0 12px 32px rgba(24,42,78,.07);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif}
+    button,input{font:inherit}
+    .app-shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
+    .sidebar{background:linear-gradient(180deg,var(--navy),#142544);color:#dbe5fa;padding:27px 18px;display:flex;flex-direction:column;gap:32px}
+    .brand{display:flex;align-items:center;gap:12px;padding:0 9px}
+    .brand-mark{width:39px;height:39px;border-radius:12px;background:linear-gradient(135deg,#6d91ff,#3867e8);display:grid;place-items:center;color:white;font-weight:800;font-size:19px;box-shadow:0 8px 20px #3867e855}
+    .brand strong{display:block;color:white;font-size:14px;letter-spacing:.2px}
+    .brand small{display:block;color:#9fb0d0;margin-top:4px;font-size:11px}
+    .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:#8092b5;padding:0 12px;margin-bottom:9px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:12px 13px;margin:4px 0;border-radius:10px;color:#bdc9df;font-size:13px}
+    .nav-item.active{background:#ffffff17;color:white;box-shadow:inset 3px 0 #79a0ff}
+    .nav-icon{width:18px;text-align:center;font-size:16px}
+    .sidebar-note{margin-top:auto;border:1px solid #ffffff20;background:#ffffff0c;border-radius:13px;padding:14px;color:#aebbd3;font-size:11px;line-height:1.6}
+    .sidebar-note strong{display:block;color:#fff;font-size:12px;margin-bottom:4px}
+    .main{min-width:0}
+    .topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;gap:20px}
+    .topbar h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.3px}
+    .topbar p{margin:5px 0 0;color:var(--muted);font-size:12px}
+    .top-actions{display:flex;align-items:center;gap:12px}
+    .live-pill{display:flex;align-items:center;gap:7px;border:1px solid #dcefe8;background:#f0faf6;color:#16845f;border-radius:30px;padding:8px 12px;font-size:11px;font-weight:700}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#20b486;box-shadow:0 0 0 4px #20b48620}
+    .refresh-btn{border:1px solid var(--line);background:white;color:#33415d;border-radius:9px;padding:9px 13px;font-size:12px;font-weight:650;cursor:pointer}
+    .refresh-btn:hover{border-color:#b8c8ed;background:#f8faff}
+    .content{max-width:1500px;margin:auto;padding:29px 34px 42px}
+    .welcome-row{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:22px}
+    .welcome-row h2{font-size:20px;margin:0;letter-spacing:-.4px}
+    .welcome-row p{font-size:12px;color:var(--muted);margin:7px 0 0}
+    .date-label{font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:9px}
+    .section-kicker{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;color:#8a96ad;margin:25px 0 12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+    .kpi{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:20px 21px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .kpi:after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-35px;top:-43px;background:var(--tint)}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .kpi-label{font-size:12px;color:var(--muted);font-weight:600}
+    .kpi-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--tint);color:var(--accent);font-size:16px}
+    .kpi-value{font-size:29px;letter-spacing:-.8px;font-weight:750;margin-top:14px;color:#17233b}
+    .kpi-foot{font-size:10px;color:#99a3b6;margin-top:6px}
+    .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:20px 21px;box-shadow:var(--shadow);min-width:0}
+    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+    .panel-head h3{font-size:13px;margin:0;font-weight:750}
+    .panel-head p{font-size:10px;color:var(--muted);margin:5px 0 0}
+    .panel-tag{font-size:10px;color:#71809b;background:#f4f6fa;border-radius:20px;padding:6px 9px;white-space:nowrap}
+    .chart-wrap{height:260px;position:relative}
+    .assistant-panel{margin-top:18px}
+    .assistant-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+    .assistant-title{display:flex;gap:12px;align-items:center}
+    .assistant-icon{width:40px;height:40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-size:19px}
+    .assistant-title h3{margin:0;font-size:14px}
+    .assistant-title p{margin:5px 0 0;font-size:11px;color:var(--muted)}
+    .assistant-badge{font-size:10px;font-weight:700;color:#3867e8;background:#edf2ff;padding:7px 10px;border-radius:20px}
+    .question-row{display:flex;gap:10px;margin-top:20px}
+    .question-row input{flex:1;min-width:0;border:1px solid #dfe5ef;border-radius:10px;padding:13px 14px;color:var(--ink);outline:none;font-size:12px;background:#fbfcff}
+    .question-row input:focus{border-color:#7c9af2;box-shadow:0 0 0 3px #3867e814}
+    .ask-btn{border:0;background:var(--blue);color:#fff;border-radius:10px;padding:0 20px;font-size:12px;font-weight:700;cursor:pointer;min-width:120px}
+    .ask-btn:hover{background:#2855d1}
+    .ask-btn:disabled{opacity:.6;cursor:wait}
+    .suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+    .suggestion{border:1px solid #e5eaf3;background:#fff;color:#63718b;padding:7px 10px;border-radius:20px;font-size:10px;cursor:pointer}
+    .suggestion:hover{border-color:#9bb1f2;color:#315bd0;background:#f8faff}
+    .answer-area{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:20px}
+    .answer-box{border:1px solid var(--line);border-radius:11px;padding:14px;background:#fbfcfe;min-width:0}
+    .answer-box h4{font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:#8490a6;margin:0 0 10px}
+    #generatedSQL{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-family:Consolas,monospace;font-size:11px;line-height:1.65;color:#29436f;max-height:180px;overflow:auto}
+    #sqlExplanation{font-size:12px;line-height:1.6;color:#53617a;margin:0}
+    .results-box{margin-top:13px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+    .results-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#fbfcfe;border-bottom:1px solid var(--line)}
+    .results-head h4{margin:0;font-size:11px}
+    #resultCount{font-size:10px;color:var(--muted)}
+    #queryResults{overflow:auto;max-height:340px}
+    #queryResults table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:11px}
+    #queryResults th{position:sticky;top:0;background:#f1f4fa;color:#53617a;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+    #queryResults th,#queryResults td{padding:11px 14px;border-bottom:1px solid #edf0f5}
+    #queryResults td{color:#34425d}
+    #queryResults tbody tr:hover{background:#f8faff}
+    .empty-state{padding:22px;color:#8994a8;font-size:11px;text-align:center}
+    .status-message{font-size:11px;color:var(--muted);margin-top:10px;min-height:16px}
+    .status-message.error{color:#c44750}
+    .footer{text-align:center;color:#a0a9b9;font-size:10px;padding:22px 10px 0}
+    @media(max-width:1000px){.app-shell{grid-template-columns:205px minmax(0,1fr)}.content{padding:24px}.topbar{padding:0 24px}.kpi-grid{gap:12px}.kpi{padding:17px}.kpi-value{font-size:25px}}
+    @media(max-width:760px){.app-shell{display:block}.sidebar{display:none}.topbar{height:auto;padding:17px 18px}.content{padding:21px 16px}.topbar h1{font-size:16px}.live-pill{display:none}.kpi-grid{grid-template-columns:1fr}.analytics-grid,.answer-area{grid-template-columns:1fr}.welcome-row{align-items:flex-start;flex-direction:column}.date-label{display:none}.chart-wrap{height:230px}.question-row{flex-direction:column}.ask-btn{padding:13px}.assistant-head{align-items:flex-start}.assistant-badge{display:none}}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div><strong>Retail Finance</strong><small>Analytics workspace</small></div>
+    </div>
+    <div>
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item active" data-page="overview">
+    <span class="nav-icon">▦</span> Overview
+</div>
+
+<div class="nav-item" data-page="transactions">
+    <span class="nav-icon">◉</span> Transactions
+</div>
+
+<div class="nav-item" data-page="payments">
+    <span class="nav-icon">◎</span> Payments
+</div>
+
+<div class="nav-item" data-page="loans">
+    <span class="nav-icon">▤</span> Loan Portfolio
+</div>
+
+<div class="nav-item" data-page="sql">
+    <span class="nav-icon">⌕</span> SQL Assistant
+</div>
+    </div>
+    <div class="sidebar-note"><strong>Analytics workspace</strong>Live metrics are retrieved from your connected retail finance database.</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><h1>Retail Finance Analytics</h1><p>Customer, transaction, payment and loan performance</p></div>
+      <div class="top-actions">
+        <span class="live-pill"><span class="live-dot"></span> DATABASE CONNECTED</span>
+        <button class="refresh-btn" id="refreshButton" type="button" onclick="refreshDashboard()">↻ &nbsp;Refresh data</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <!-- CSV DOWNLOAD SECTION -->
+<div class="csv-download-section">
+    <h3>Download Reports</h3>
+    <p>Download your finance data as CSV files.</p>
+
+    <button onclick="window.location.href='/api/export/transactions'">
+        Download Transactions CSV
+    </button>
+
+    <button onclick="window.location.href='/api/export/payments'">
+        Download Payments CSV
+    </button>
+
+    <button onclick="window.location.href='/api/export/loans'">
+        Download Loans CSV
+    </button>
+</div>
+      <div class="welcome-row">
+        <div><h2>Financial overview</h2><p>Monitor key activity and explore your finance data.</p></div>
+        <div class="date-label" id="todayLabel">Updated when data is refreshed</div>
+      </div>
+
+      <div class="section-kicker">Key performance indicators</div>
+      <div class="kpi-grid">
+        <article class="kpi" style="--accent:#3867e8;--tint:#edf2ff">
+          <div class="kpi-top"><span class="kpi-label">Total customers</span><span class="kpi-icon">♙</span></div>
+          <div class="kpi-value" id="customers">—</div><div class="kpi-foot">Customers in the database</div>
+        </article>
+        <article class="kpi" style="--accent:#159b72;--tint:#eaf8f2">
+          <div class="kpi-top"><span class="kpi-label">Total transactions</span><span class="kpi-icon">⇄</span></div>
+          <div class="kpi-value" id="transactions">—</div><div class="kpi-foot">Recorded transaction count</div>
+        </article>
+        <article class="kpi" style="--accent:#8a5ce6;--tint:#f2edff">
+          <div class="kpi-top"><span class="kpi-label">Transaction amount</span><span class="kpi-icon">₹</span></div>
+          <div class="kpi-value" id="amount">—</div><div class="kpi-foot">Total value of transactions</div>
+        </article>
+      </div>
+
+      <div class="section-kicker">Portfolio analytics</div>
+      <div class="analytics-grid">
+        <section class="panel">
+          <div class="panel-head"><div><h3>Payment status analysis</h3><p>Distribution of recorded payment statuses</p></div><span class="panel-tag">Payments</span></div>
+          <div class="chart-wrap"><canvas id="paymentChart" aria-label="Payment status chart"></canvas></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><h3>Loan status analysis</h3><p>Number of loans by current status</p></div><span class="panel-tag">Loans</span></div>
+          <div class="chart-wrap"><canvas id="loanChart" aria-label="Loan status chart"></canvas></div>
+        </section>
+      </div>
+
+      <section class="panel assistant-panel">
+        <div class="assistant-head">
+          <div class="assistant-title"><div class="assistant-icon">⌘</div><div><h3>Ask your database</h3><p>Use natural language to generate and run a read-only SQL query.</p></div></div>
+          <span class="assistant-badge">NL → SQL</span>
+        </div>
+        <form id="questionForm">
+          <div class="question-row">
+            <input type="text" id="userQuestion" placeholder="Example: Show payment status" autocomplete="off" aria-label="Ask a question about your database">
+            <button class="ask-btn" id="askButton" type="submit">Ask question&nbsp; →</button>
+          </div>
+        </form>
+        <div class="suggestions">
+          <button class="suggestion" type="button" data-question="Show payment status">Show payment status</button>
+          <button class="suggestion" type="button" data-question="Show loan status">Show loan status</button>
+          <button class="suggestion" type="button" data-question="Show recent transactions">Recent transactions</button>
+          <button class="suggestion" type="button" data-question="Show all customers">Show all customers</button>
+        </div>
+        <div id="askStatus" class="status-message" role="status" aria-live="polite"></div>
+
+        <div class="answer-area">
+          <div class="answer-box"><h4>Generated SQL query</h4><pre id="generatedSQL">Your generated SQL query will appear here.</pre></div>
+          <div class="answer-box"><h4>Query explanation</h4><p id="sqlExplanation">A simple explanation of the query will appear here.</p></div>
+        </div>
+        <div class="results-box">
+          <div class="results-head"><h4>Query results</h4><span id="resultCount">No query run yet</span></div>
+          <div id="queryResults"><div class="empty-state">Ask a question to view matching database records.</div></div>
+        </div>
+      </section>
+      <div class="footer">Retail Finance Analytics Dashboard · Data shown from your connected database</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  let paymentChartInstance = null;
+  let loanChartInstance = null;
+
+  const numberFormat = value => Number(value || 0).toLocaleString('en-IN');
+  const currencyFormat = value => '₹' + numberFormat(value);
+
+  async function fetchJson(url) {
+    const response = await fetch(url);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+    return data;
+  }
+
+  async function loadDashboard() {
+    const data = await fetchJson('/api/summary');
+    document.getElementById('customers').textContent = numberFormat(data.total_customers);
+    document.getElementById('transactions').textContent = numberFormat(data.total_transactions);
+    document.getElementById('amount').textContent = currencyFormat(data.total_transaction_amount);
+  }
+
+  function chartDefaults() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 7, padding: 18, color: '#66738b', font: { size: 10 } } },
+        tooltip: { backgroundColor: '#14213d', padding: 11, cornerRadius: 8 }
+      }
+    };
+  }
+
+  async function loadCharts() {
+    const [paymentData, loanData] = await Promise.all([
+      fetchJson('/api/payment-analysis'),
+      fetchJson('/api/loan-analysis')
+    ]);
+
+    if (paymentChartInstance) paymentChartInstance.destroy();
+    if (loanChartInstance) loanChartInstance.destroy();
+
+    paymentChartInstance = new Chart(document.getElementById('paymentChart'), {
+      type: 'doughnut',
+      data: {
+        labels: paymentData.map(item => item.payment_status),
+        datasets: [{ data: paymentData.map(item => Number(item.total)), backgroundColor: ['#159b72','#e5a13a','#dc5b62','#4778e8','#8a5ce6'], borderWidth: 0, hoverOffset: 7 }]
+      },
+      options: { ...chartDefaults(), cutout: '70%' }
+    });
+
+    loanChartInstance = new Chart(document.getElementById('loanChart'), {
+      type: 'bar',
+      data: {
+        labels: loanData.map(item => item.loan_status),
+        datasets: [{ label: 'Number of loans', data: loanData.map(item => Number(item.total)), backgroundColor: ['#4778e8','#8a5ce6','#e5a13a','#159b72','#dc5b62'], borderRadius: 7, maxBarThickness: 54 }]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: { ...chartDefaults().plugins, legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#77839a', font: { size: 10 } }, border: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0, color: '#77839a', font: { size: 10 } }, grid: { color: '#edf0f5' }, border: { display: false } }
+        }
+      }
+    });
+  }
+
+  async function refreshDashboard() {
+    const button = document.getElementById('refreshButton');
+    button.disabled = true;
+    button.textContent = '↻  Refreshing…';
+    try {
+      await Promise.all([loadDashboard(), loadCharts()]);
+      document.getElementById('todayLabel').textContent = 'Last refreshed: ' + new Date().toLocaleString('en-IN');
+    } catch (error) {
+      console.error(error);
+      document.getElementById('todayLabel').textContent = 'Unable to refresh — check database connection';
+    } finally {
+      button.disabled = false;
+      button.innerHTML = '↻ &nbsp;Refresh data';
+    }
+  }
+
+  function renderResults(rows) {
+    const host = document.getElementById('queryResults');
+    const count = document.getElementById('resultCount');
+    host.replaceChildren();
+    count.textContent = `${rows.length} row${rows.length === 1 ? '' : 's'}`;
+
+    if (!rows.length) {
+      host.innerHTML = '<div class="empty-state">The query completed successfully, but no records matched.</div>';
+      return;
+    }
+
+    const columns = Object.keys(rows[0]);
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    columns.forEach(column => {
+      const th = document.createElement('th');
+      th.textContent = column.replaceAll('_', ' ');
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      columns.forEach(column => {
+        const td = document.createElement('td');
+        const value = row[column];
+        td.textContent = value === null || value === undefined ? '—' : String(value);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    host.appendChild(table);
+  }
+
+  async function askQuestion(event) {
+    if (event) event.preventDefault();
+    const input = document.getElementById('userQuestion');
+    const question = input.value.trim();
+    const status = document.getElementById('askStatus');
+    const button = document.getElementById('askButton');
+    if (!question) {
+      status.textContent = 'Please enter a question first.';
+      status.className = 'status-message error';
+      input.focus();
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Running…';
+    status.textContent = 'Generating SQL and querying the database…';
+    status.className = 'status-message';
+    document.getElementById('resultCount').textContent = 'Working…';
+
+    try {
+      const response = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'The query could not be completed.');
+
+      document.getElementById('generatedSQL').textContent = data.sql || 'No SQL returned.';
+      document.getElementById('sqlExplanation').textContent = data.explanation || 'No explanation provided.';
+      renderResults(Array.isArray(data.results) ? data.results : []);
+      status.textContent = 'Query completed successfully.';
+      status.className = 'status-message';
+    } catch (error) {
+      status.textContent = error.message || 'Server connection failed. Check that Flask and the database are running.';
+      status.className = 'status-message error';
+      document.getElementById('resultCount').textContent = 'Query failed';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Ask question  →';
+    }
+  }
+
+  document.getElementById('questionForm').addEventListener('submit', askQuestion);
+  document.querySelectorAll('.suggestion').forEach(button => {
+    button.addEventListener('click', () => {
+      document.getElementById('userQuestion').value = button.dataset.question;
+      document.getElementById('questionForm').requestSubmit();
+    });
+  });
+
+  refreshDashboard();
+  // SIDEBAR NAVIGATION
+const navItems = document.querySelectorAll('.nav-item');
+const mainContent = document.querySelector('.content');
+const mainArea = document.querySelector('.main');
+
+const navDataPage = document.createElement('section');
+navDataPage.id = 'navDataPage';
+navDataPage.className = 'panel';
+navDataPage.style.display = 'none';
+mainArea.appendChild(navDataPage);
+
+navItems.forEach(item => {
+    item.style.cursor = 'pointer';
+
+    item.addEventListener('click', async () => {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+
+        const name = item.textContent.trim().toLowerCase();
+
+        if (name.includes('overview')) {
+            navDataPage.style.display = 'none';
+            mainContent.style.display = '';
+            window.scrollTo(0, 0);
+            return;
+        }
+
+        mainContent.style.display = 'none';
+        navDataPage.style.display = 'block';
+
+        if (name.includes('sql')) {
+            mainContent.style.display = '';
+            navDataPage.style.display = 'none';
+
+            document.querySelector('.assistant-panel')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        let question = '';
+
+        if (name.includes('transaction')) {
+            question = 'Show recent transactions';
+        } else if (name.includes('payment')) {
+            question = 'Show all payments';
+        } else if (name.includes('loan')) {
+            question = 'Show all loans';
+        }
+
+        navDataPage.innerHTML = '<h2>Loading data...</h2>';
+
+        try {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Unable to load data');
+            }
+
+            navDataPage.innerHTML = '';
+
+            const heading = document.createElement('h2');
+            heading.textContent = item.textContent.trim();
+            navDataPage.appendChild(heading);
+
+            if (!data.results || data.results.length === 0) {
+                navDataPage.append('No records found.');
+                return;
+            }
+            // SEARCH AND FILTER CONTROLS
+            const columns = Object.keys(data.results[0]);
+
+const toolbar = document.createElement('div');
+toolbar.style.cssText = 'display:flex;gap:12px;margin:20px 0;flex-wrap:wrap;';
+
+const searchInput = document.createElement('input');
+searchInput.type = 'text';
+searchInput.placeholder = 'Search records...';
+searchInput.style.cssText = 'padding:12px;border:1px solid #ccc;border-radius:8px;flex:1;min-width:200px;';
+
+const statusFilter = document.createElement('select');
+statusFilter.style.cssText = 'padding:12px;border:1px solid #ccc;border-radius:8px;';
+
+const clearButton = document.createElement('button');
+clearButton.textContent = 'Clear Filters';
+clearButton.style.cssText = 'padding:12px 18px;border:0;border-radius:8px;cursor:pointer;';
+
+const statusColumn = columns.find(col => col.toLowerCase().includes('status'));
+
+statusFilter.innerHTML = '<option value="">All Statuses</option>';
+
+if (statusColumn) {
+    const statuses = [...new Set(data.results.map(row => row[statusColumn]))];
+
+    statuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusFilter.appendChild(option);
+    });
+}
+// PAYMENT METHOD FILTER
+const methodFilter = document.createElement('select');
+methodFilter.style.cssText = 'padding:12px;border:1px solid #ccc;border-radius:8px;';
+
+const methodColumn = columns.find(col =>
+    col.toLowerCase().includes('payment_method')
+);
+console.log('Columns:', columns);
+console.log('Method column:', methodColumn);
+console.log('Detected payment method column:', methodColumn);
+
+methodFilter.innerHTML = '<option value="">All Methods</option>';
+
+if (methodColumn) {
+    const methods = [...new Set(data.results.map(row => row[methodColumn]))];
+
+    methods.forEach(method => {
+        const option = document.createElement('option');
+        option.value = method;
+        option.textContent = method;
+        methodFilter.appendChild(option);
+    });
+}
+
+toolbar.append(searchInput, statusFilter);
+
+if (methodColumn) {
+    toolbar.appendChild(methodFilter);
+}
+
+toolbar.appendChild(clearButton);
+navDataPage.appendChild(toolbar);
+
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+
+          
+
+            const header = table.createTHead().insertRow();
+
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column.replaceAll('_', ' ').toUpperCase();
+                th.style.padding = '12px';
+                header.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+            function renderTable() {
+    const searchText = searchInput.value.toLowerCase();
+    const selectedStatus = statusFilter.value;
+    const selectedMethod = methodFilter ? methodFilter.value : '';
+
+    tbody.innerHTML = '';
+
+    const filteredResults = data.results.filter(row => {
+        const matchesSearch = Object.values(row).some(value =>
+            String(value ?? '').toLowerCase().includes(searchText)
+        );
+
+        const matchesStatus = !selectedStatus ||
+    (statusColumn && String(row[statusColumn]) === selectedStatus);
+
+const matchesMethod = !selectedMethod ||
+    (methodColumn && String(row[methodColumn]) === selectedMethod);
+
+return matchesSearch && matchesStatus && matchesMethod;
+    });
+
+    filteredResults.forEach(row => {
+        const tr = tbody.insertRow();
+
+        columns.forEach(column => {
+            const td = tr.insertCell();
+            td.textContent = row[column] ?? '';
+            td.style.padding = '12px';
+        });
+    });
+}
+
+searchInput.addEventListener('input', renderTable);
+statusFilter.addEventListener('change', renderTable);
+methodFilter.addEventListener('change', renderTable);
+
+clearButton.addEventListener('click', () => {
+    searchInput.value = '';
+    statusFilter.value = '';
+    methodFilter.value = '';
+    renderTable();
+});
+renderTable();
+
+
+            navDataPage.appendChild(table);
+
+        } catch (error) {
+            navDataPage.innerHTML =
+                '<h3>Error loading data</h3><p>' +
+                error.message + '</p>';
+        }
+    });
+});
+
+</script>
+</body>
+</html>
